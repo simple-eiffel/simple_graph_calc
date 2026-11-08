@@ -20,19 +20,59 @@ On macOS the menus are in the system menu bar, so they do not appear in the wind
 
 On Windows the window keeps the size the program asks for (GTK and AppKit grow a window to fit its content), so the lower part of the analysis panel is cut off in these pictures; the table window opens as a window of its own beside the main one.
 
-## A Mac application
+## Build it yourself on a Mac
 
-To open the calculator from Finder, the Dock or Spotlight, finalize the `simple_graph_calc` target and wrap it in an app bundle:
+Everything below was checked on 2026-11-08: fresh clones from GitHub, a shell with nothing set but these lines, and plain `ec`. It works on Apple silicon with macOS 15.
+
+**1. Tools, once.** Apple's Command Line Tools (`xcode-select --install`), then [Homebrew](https://brew.sh), then:
 
 ```
+brew install eiffelstudio cairo pkgconf
+```
+
+**2. The source.** The calculator and the 13 libraries it builds on, side by side in one folder:
+
+```
+mkdir -p ~/simple_eiffel && cd ~/simple_eiffel
+for r in simple_graph_calc simple_gui simple_cairo simple_math simple_mml simple_sorter \
+         simple_calculus simple_json simple_datetime simple_decimal simple_zstring \
+         simple_reflection simple_encoding simple_factory; do
+  git clone https://github.com/simple-eiffel/$r.git
+done
+```
+
+**3. The environment** (put it in `~/.zprofile` to keep it). EiffelStudio's own copy of Gobo is enough, so nothing else needs downloading:
+
+```
+eval "$(/opt/homebrew/bin/brew shellenv)"
+export ISE_EIFFEL="$(brew --prefix eiffelstudio)"
+export ISE_PLATFORM=macosx-x86-64        # Homebrew's label; the build is native arm64
+export ISE_LIBRARY="$ISE_EIFFEL"
+export GOBO_LIBRARY="$ISE_EIFFEL/contrib/library/gobo/library"
+export PATH="$ISE_EIFFEL/studio/spec/$ISE_PLATFORM/bin:$PATH"
+export SIMPLE_EIFFEL=~/simple_eiffel
+```
+
+**4. Build, and wrap it as an app:**
+
+```
+make -C $SIMPLE_EIFFEL/simple_gui/Clib       # the AppKit backend's object (not in git)
+cd $SIMPLE_EIFFEL/simple_graph_calc
 ec -batch -config simple_graph_calc.ecf -target simple_graph_calc -finalize -c_compile
 sh scripts/make_macos_app.sh EIFGENs/simple_graph_calc/F_code/simple_graph_calc
 open "dist/Eiffel Graphing Calculator.app"
 ```
 
-That `ec` line finalizes without contracts, which is what an application for people to use wants; the test builds keep their contracts. `ec` can also exit 0 when its C step fails, so check that the executable it names exists before running the script.
+The first `ec` run takes several minutes. Its `ld: warning: ... libSystem.tbd` lines are harmless. `ec` can exit 0 even when its C step fails, so check that `EIFGENs/simple_graph_calc/F_code/simple_graph_calc` exists before running the script. That `ec` line finalizes without contracts, as an application for people to use should; the test target (`simple_graph_calc_tests`) keeps them.
 
-The script uses only tools that ship with macOS. It writes `Info.plist` (named "Eiffel Graphing Calculator", bundle id `org.simple-eiffel.graph-calc`, English and Hebrew), builds the icon from `packaging/macos/app_icon_1024.png`, copies the libraries the calculator needs from outside the system (Homebrew's cairo and the 15 libraries it pulls in) into `Contents/Frameworks` and points the app at those copies (`scripts/bundle_macos_libraries.sh`), and signs everything ad hoc, which Apple silicon requires. The app is about 8 MB and runs on a Mac without Homebrew. It is not signed with a Developer ID or notarized, and will not be: build it from source on your own Mac, as above. A copy carried to another Mac opens through Gatekeeper's "Open anyway" (System Settings, Privacy & Security) the first time.
+**What the script makes.** It uses only tools that ship with macOS:
+- `Info.plist`, naming the app "Eiffel Graphing Calculator" with bundle id `org.simple-eiffel.graph-calc`, in English and Hebrew;
+- the icon, from `packaging/macos/app_icon_1024.png`;
+- copies of the libraries the calculator needs from outside the system: Homebrew's cairo and the 15 libraries it pulls in. They go into `Contents/Frameworks`, and the app is pointed at those copies (`scripts/bundle_macos_libraries.sh`).
+
+It then signs everything ad hoc, which Apple silicon requires.
+
+The result is about 8 MB and runs without Homebrew. It is built for the Mac that builds it. Anyone who wants it on their own Mac builds it the same way, from source.
 
 ## Regenerating the parser
 
