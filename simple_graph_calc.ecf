@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<system xmlns="http://www.eiffel.com/developers/xml/configuration-1-23-0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.eiffel.com/developers/xml/configuration-1-23-0 http://www.eiffel.com/developers/xml/configuration-1-23-0.xsd" name="simple_graph_calc" uuid="8C2E61F4-3D7A-4B95-9E0B-5A17C6D48E23">
+	<description>Eiffel Graphing Calculator: a native GUI showcase for simple_gui (GTK 4 on Linux, AppKit on macOS), with maths from simple_math and simple_calculus and a geyacc expression grammar.</description>
+
+	<target name="simple_graph_calc">
+		<root class="GRAPH_CALC_APP" feature="make"/>
+		<file_rule>
+			<exclude>/EIFGENs$</exclude>
+			<exclude>/\..*$</exclude>
+		</file_rule>
+		<option warning="warning">
+			<assertions precondition="true" postcondition="true" check="true" invariant="true" loop="true" supplier_precondition="true"/>
+		</option>
+		<setting name="console_application" value="false"/>
+		<setting name="dead_code_removal" value="feature"/>
+		<capability>
+			<concurrency support="scoop" use="scoop"/>
+			<void_safety support="all"/>
+		</capability>
+		<library name="base" location="$ISE_LIBRARY\library\base\base.ecf"/>
+		<library name="simple_gui" location="$SIMPLE_EIFFEL\simple_gui\simple_gui.ecf"/>
+		<library name="simple_cairo" location="$SIMPLE_EIFFEL\simple_cairo\simple_cairo.ecf"/>
+		<library name="simple_math" location="$SIMPLE_EIFFEL\simple_math\simple_math.ecf"/>
+		<library name="simple_calculus" location="$SIMPLE_EIFFEL\simple_calculus\simple_calculus.ecf"/>
+		<library name="gobo_kernel" location="$GOBO_LIBRARY/kernel/library.ecf" readonly="true"/>
+		<library name="gobo_parse_skl" location="$GOBO_LIBRARY/parse/library_skl.ecf" readonly="true"/>
+		<cluster name="src" location=".\src\" recursive="true"/>
+	</target>
+
+	<target name="simple_graph_calc_tests" extends="simple_graph_calc">
+		<root class="TEST_APP" feature="make"/>
+		<option warning="warning">
+			<assertions precondition="true" postcondition="true" check="true" invariant="true" loop="true" supplier_precondition="true"/>
+		</option>
+		<setting name="console_application" value="true"/>
+		<cluster name="testing" location=".\testing\" recursive="true"/>
+	</target>
+</system>
