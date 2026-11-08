@@ -37,6 +37,9 @@ feature {NONE} -- Initialization
 				run_test (agent g.test_spoken_labels_reach_the_assistive_tree, "spoken_labels_reach_the_assistive_tree")
 				run_test (agent g.test_export_png, "export_png")
 				run_test (agent g.test_bad_expression_is_reported, "bad_expression_is_reported")
+				run_test (agent g.test_session_round_trip, "session_round_trip")
+				run_test (agent g.test_session_rejects_other_json, "session_rejects_other_json")
+				run_test (agent g.test_long_root_lists_are_capped, "long_root_lists_are_capped")
 			else
 				print ("  SKIP: no display%N")
 			end

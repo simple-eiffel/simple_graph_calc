@@ -21,6 +21,7 @@
 		<library name="simple_gui" location="$SIMPLE_EIFFEL\simple_gui\simple_gui.ecf"/>
 		<library name="simple_cairo" location="$SIMPLE_EIFFEL\simple_cairo\simple_cairo.ecf"/>
 		<library name="simple_math" location="$SIMPLE_EIFFEL\simple_math\simple_math.ecf"/>
+		<library name="simple_json" location="$SIMPLE_EIFFEL\simple_json\simple_json.ecf"/>
 		<library name="simple_calculus" location="$SIMPLE_EIFFEL\simple_calculus\simple_calculus.ecf"/>
 		<library name="gobo_kernel" location="$GOBO_LIBRARY/kernel/library.ecf" readonly="true"/>
 		<library name="gobo_parse_skl" location="$GOBO_LIBRARY/parse/library_skl.ecf" readonly="true"/>

@@ -119,6 +119,17 @@ feature -- Navigation
 			make_standard
 		end
 
+	set_region (a_x_min, a_x_max, a_y_min, a_y_max: REAL_64)
+			-- Show exactly this region.
+		require
+			x_range: a_x_min < a_x_max
+			y_range: a_y_min < a_y_max
+		do
+			make (a_x_min, a_x_max, a_y_min, a_y_max)
+		ensure
+			set: x_min = a_x_min and x_max = a_x_max and y_min = a_y_min and y_max = a_y_max
+		end
+
 feature -- Ticks
 
 	tick_step (a_span: REAL_64): REAL_64

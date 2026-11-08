@@ -5,8 +5,9 @@ note
 		result goes back through the GUI's mailbox, followed by a wake. The worker
 		parses the expression itself, so no object is shared with the GUI.
 
-		Result payload (tag Result_tag), one "key=value" per line:
-		derivative, integral, roots (comma-separated), or error.
+		Result payload (tag Result_tag), one "key=value" per line: request (the
+		request's number, so the GUI can drop stale results), then derivative,
+		integral, roots (comma-separated), or error.
 	]"
 
 class
@@ -32,9 +33,10 @@ feature -- Constants
 
 feature -- Requests
 
-	set_request (a_expression: separate READABLE_STRING_32; a_x0, a_a, a_b, a_low, a_high: REAL_64)
-			-- Copy a request in (called synchronously by the GUI).
+	set_request (a_number: INTEGER; a_expression: separate READABLE_STRING_32; a_x0, a_a, a_b, a_low, a_high: REAL_64)
+			-- Copy request `a_number' in (called synchronously by the GUI).
 		do
+			request_number := a_number
 			create expression.make_from_separate (a_expression)
 			x0 := a_x0
 			a := a_a
@@ -52,6 +54,7 @@ feature -- Requests
 			create l_parser.make
 			l_parser.parse_text (expression)
 			create l_out.make (80)
+			l_out.append ({STRING_32} "request=" + request_number.out + {STRING_32} "%N")
 			if attached l_parser.last_node as al_node then
 				l_out.append ({STRING_32} "derivative=" + short (safe_derivative (al_node, x0)) + {STRING_32} "%N")
 				if a < b then
@@ -70,6 +73,7 @@ feature -- Requests
 feature -- Access (for tests)
 
 	expression: STRING_32
+	request_number: INTEGER
 	x0, a, b, low, high: REAL_64
 
 feature -- Calculations
@@ -132,6 +136,10 @@ feature -- Calculations
 						add_root (Result, x1)
 					elseif y1 * y2 < 0.0 then
 						r := math.bisection (agent a_node.value, x1, x2, 1.0e-10, 200)
+						if r.abs < 1.0e-9 * (a_high - a_low).max (1.0) then
+								-- Floating-point noise around zero differs by platform (-9.3e-11 on macOS): snap it.
+							r := 0.0
+						end
 						if a_node.value (r).abs < 1.0e-6 then
 							add_root (Result, r)
 						end

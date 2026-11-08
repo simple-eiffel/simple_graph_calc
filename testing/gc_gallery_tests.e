@@ -143,6 +143,61 @@ feature -- Tests
 			assert ("message", main.status_label.text.has_substring ("unexpected"))
 		end
 
+	test_session_round_trip
+			-- Save, clear, open: the functions, view, inputs come back.
+		local
+			l_session: GC_SESSION
+			l_path: PATH
+			l_texts: ARRAYED_LIST [STRING_32]
+		do
+			create l_session
+			create l_path.make_from_string ("gallery_session.json")
+			create l_texts.make (4)
+			across main.plots as ic loop l_texts.extend (ic.text) end
+			main.view.set_region (-3.0, 5.0, -2.0, 2.0)
+			main.x0_field.set_text ("1.5")
+			assert ("saved", l_session.save (main, l_path))
+			main.clear_all
+			main.view.reset
+			assert ("opened", l_session.open (main, l_path))
+			assert ("same count", main.plots.count = l_texts.count)
+			assert ("first function", main.plots.first.text.same_string (l_texts.first))
+			assert ("view restored", main.view.x_min = -3.0 and main.view.x_max = 5.0)
+			assert ("input restored", main.x0_field.text.same_string ("1.5"))
+		end
+
+	test_session_rejects_other_json
+		local
+			l_session: GC_SESSION
+			l_file: PLAIN_TEXT_FILE
+		do
+			create l_file.make_open_write ("gallery_other.json")
+			l_file.put_string ("{%"hello%": 1}")
+			l_file.close
+			create l_session
+			assert ("rejected", not l_session.open (main, create {PATH}.make_from_string ("gallery_other.json")))
+			assert ("says why", attached l_session.last_error as al_e and then al_e.has_substring ("not a calculator session"))
+		end
+
+	test_long_root_lists_are_capped
+			-- sin(x) on -10..10 has seven roots: the panel shows six and a count; the graph marks all.
+		local
+			i: INTEGER
+			l_before: INTEGER
+		do
+			main.clear_all
+			main.view.reset
+			l_before := main.analyses_received
+			driver.type_text (main.expression_field, "sin(x)")
+			driver.perform_click (main.plot_button)
+			from i := 1 until main.analyses_received > l_before or i > 60 loop
+				app.process_events (100)
+				i := i + 1
+			end
+			assert ("seven markers", main.roots.count = 7)
+			assert ("capped with count, got " + main.roots_value.text.out, main.roots_value.text.has_substring ({STRING_32} "… (7)"))
+		end
+
 feature {NONE} -- Helpers
 
 	app: GUI_APPLICATION

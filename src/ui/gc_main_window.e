@@ -64,7 +64,10 @@ feature -- Access (the test driver and the gallery reach these)
 			-- Menu item ids (for tests).
 
 	analyses_received: INTEGER
-			-- Analysis results that came back from the worker.
+			-- Current analysis results that came back from the worker (stale ones are dropped).
+
+	requests_sent: INTEGER
+			-- Analysis requests handed to the worker; each result names the one it answers.
 
 	last_image: detachable CAIRO_SURFACE
 			-- The image on the canvas now.
@@ -117,7 +120,8 @@ feature -- Commands
 		do
 			if attached selected_plot as al_plot then
 				status_label.set_text (texts.computing)
-				send_request (analyzer, al_plot.text, number_in (x0_field, 0.0), number_in (lower_field, 0.0),
+				requests_sent := requests_sent + 1
+				send_request (analyzer, requests_sent, al_plot.text, number_in (x0_field, 0.0), number_in (lower_field, 0.0),
 					number_in (upper_field, {SIMPLE_MATH}.pi), view.x_min, view.x_max)
 			else
 				status_label.set_text (texts.no_function)
@@ -207,6 +211,9 @@ feature {NONE} -- Building
 			l_menu: GUI_MENU
 		do
 			l_menu := app.menu.add_menu ("File")
+			l_menu.add_item ("Open Session…", "primary+O", agent open_with_dialog)
+			l_menu.add_item ("Save Session…", "primary+S", agent save_with_dialog)
+			l_menu.add_separator
 			l_menu.add_item ("Export Graph as PNG…", "primary+E", agent export_with_dialog)
 			export_item_id := l_menu.last_item_id
 			l_menu.add_separator
@@ -411,7 +418,7 @@ feature {NONE} -- Events
 			l_key, l_value: STRING_32
 			i: INTEGER
 		do
-			if a_tag = {GC_ANALYZER}.Result_tag then
+			if a_tag = {GC_ANALYZER}.Result_tag and then request_of (a_payload) = requests_sent then
 				analyses_received := analyses_received + 1
 				roots.wipe_out
 				across a_payload.split ('%N') as ic loop
@@ -424,8 +431,8 @@ feature {NONE} -- Events
 						elseif l_key.same_string ("integral") then
 							integral_value.set_text (l_value)
 						elseif l_key.same_string ("roots") then
-							roots_value.set_text (l_value)
 							collect_roots (l_value)
+							roots_value.set_text (roots_display (l_value))
 						elseif l_key.same_string ("error") then
 							status_label.set_text (l_value)
 						end
@@ -476,6 +483,30 @@ feature {NONE} -- Events
 			end
 		end
 
+	open_with_dialog
+		local
+			l_session: GC_SESSION
+		do
+			if attached app.dialogs.open_file ("Open Session", <<"json">>) as al_path then
+				create l_session
+				if not l_session.open (Current, al_path) and then attached l_session.last_error as al_why then
+					status_label.set_text (al_why)
+				end
+			end
+		end
+
+	save_with_dialog
+		local
+			l_session: GC_SESSION
+		do
+			if attached app.dialogs.save_file ("Save Session", <<"json">>) as al_path then
+				create l_session
+				if not l_session.save (Current, al_path) then
+					status_label.set_text ("Could not write " + al_path.name)
+				end
+			end
+		end
+
 	export_with_dialog
 		do
 			if attached app.dialogs.save_file ("Export Graph as PNG", <<"png">>) as al_path then
@@ -499,10 +530,10 @@ feature {NONE} -- Implementation
 	is_dragging: BOOLEAN
 	drag_x, drag_y: INTEGER
 
-	send_request (a_analyzer: separate GC_ANALYZER; a_text: STRING_32; a_x0, a_a, a_b, a_low, a_high: REAL_64)
+	send_request (a_analyzer: separate GC_ANALYZER; a_number: INTEGER; a_text: STRING_32; a_x0, a_a, a_b, a_low, a_high: REAL_64)
 			-- Copy the request in (synchronous), then start it (asynchronous: no reference argument).
 		do
-			a_analyzer.set_request (a_text, a_x0, a_a, a_b, a_low, a_high)
+			a_analyzer.set_request (a_number, a_text, a_x0, a_a, a_b, a_low, a_high)
 			a_analyzer.analyze
 		end
 
@@ -517,6 +548,45 @@ feature {NONE} -- Implementation
 				Result := al_node.value (0.0)
 			else
 				Result := a_default
+			end
+		end
+
+	request_of (a_payload: STRING_32): INTEGER
+			-- The request number a result answers (its first line, "request=N").
+		local
+			l_first: STRING_32
+		do
+			l_first := a_payload.split ('%N').first
+			if l_first.starts_with ({STRING_32} "request=") then
+				l_first.remove_head (8)
+				if l_first.is_integer then
+					Result := l_first.to_integer
+				end
+			end
+		end
+
+	Shown_roots: INTEGER = 6
+			-- Roots listed in the panel; every root still gets its marker on the graph.
+
+	roots_display (a_text: STRING_32): STRING_32
+			-- `a_text' cut to `Shown_roots' values, then an ellipsis.
+		local
+			l_parts: LIST [STRING_32]
+			i: INTEGER
+		do
+			l_parts := a_text.split (',')
+			if l_parts.count <= Shown_roots then
+				Result := a_text
+			else
+				create Result.make (60)
+				from i := 1 until i > Shown_roots loop
+					if i > 1 then
+						Result.append ({STRING_32} ",")
+					end
+					Result.append (l_parts [i])
+					i := i + 1
+				end
+				Result.append ({STRING_32} ", … (" + l_parts.count.out + {STRING_32} ")")
 			end
 		end
 
