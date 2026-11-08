@@ -7,7 +7,13 @@ A scientific graphing calculator written in Eiffel on **simple_gui**, so it is a
 - **Graphs** drawn with simple_cairo on a native canvas: pan with the arrow keys or the mouse, zoom with + and −.
 - **Analysis** (f′(x₀), ∫ from a to b, roots) runs on a SCOOP worker, so the window stays responsive.
 
-Status: stage 1, the expression grammar (7 of 7 tests pass on Linux). The window comes next.
+Status: 0.1. On Linux (GTK 4, WSLg) all 16 tests pass: 7 for the grammar, 9 for a scripted session through simple_gui's test driver that plots, analyses on the worker, zooms, opens the table window, and switches to dark and to the Hebrew interface. macOS: in progress.
+
+| Light, with analysis | Dark, two functions | Hebrew interface (mirrored) |
+|---|---|---|
+| ![light](docs/gallery/linux/gallery_2_analysis.png) | ![dark](docs/gallery/linux/gallery_4_dark.png) | ![hebrew](docs/gallery/linux/gallery_5_hebrew.png) |
+
+Menus stay in English in 0.1 (simple_gui cannot yet relabel menu items). The Hebrew wording is machine-written.
 
 ## Regenerating the parser
 

@@ -1,4 +1,4 @@
-note
+﻿note
 	description: "The expression's one variable (x, θ, or any other name that is not a function or constant)."
 
 class

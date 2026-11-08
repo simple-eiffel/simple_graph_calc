@@ -1,0 +1,189 @@
+note
+	description: "[
+		The analysis worker, on its own SCOOP processor. The GUI hands it a request
+		with `set_request' (copied in at once), then calls `analyze' asynchronously; the
+		result goes back through the GUI's mailbox, followed by a wake. The worker
+		parses the expression itself, so no object is shared with the GUI.
+
+		Result payload (tag Result_tag), one "key=value" per line:
+		derivative, integral, roots (comma-separated), or error.
+	]"
+
+class
+	GC_ANALYZER
+
+inherit
+	GC_FORMAT
+
+create
+	make
+
+feature {NONE} -- Initialization
+
+	make (a_mailbox: separate GUI_MAILBOX)
+		do
+			mailbox := a_mailbox
+			create expression.make_empty
+		end
+
+feature -- Constants
+
+	Result_tag: INTEGER = 1
+
+feature -- Requests
+
+	set_request (a_expression: separate READABLE_STRING_32; a_x0, a_a, a_b, a_low, a_high: REAL_64)
+			-- Copy a request in (called synchronously by the GUI).
+		do
+			create expression.make_from_separate (a_expression)
+			x0 := a_x0
+			a := a_a
+			b := a_b
+			low := a_low
+			high := a_high
+		end
+
+	analyze
+			-- Work out the request and post the result (called asynchronously).
+		local
+			l_parser: GC_PARSER
+			l_out: STRING_32
+		do
+			create l_parser.make
+			l_parser.parse_text (expression)
+			create l_out.make (80)
+			if attached l_parser.last_node as al_node then
+				l_out.append ({STRING_32} "derivative=" + short (safe_derivative (al_node, x0)) + {STRING_32} "%N")
+				if a < b then
+					l_out.append ({STRING_32} "integral=" + short (safe_integral (al_node, a, b)) + {STRING_32} "%N")
+				else
+					l_out.append ({STRING_32} "integral=undefined%N")
+				end
+				l_out.append ({STRING_32} "roots=" + roots_text (al_node, low, high) + {STRING_32} "%N")
+			elseif attached l_parser.error_message as al_message then
+				l_out.append ({STRING_32} "error=" + al_message + {STRING_32} "%N")
+			end
+			post (mailbox, l_out)
+			(create {GUI_WAKE}).wake
+		end
+
+feature -- Access (for tests)
+
+	expression: STRING_32
+	x0, a, b, low, high: REAL_64
+
+feature -- Calculations
+
+	safe_derivative (a_node: GC_NODE; a_x: REAL_64): REAL_64
+			-- f'(a_x) by simple_calculus, or NaN where f is undefined nearby.
+		local
+			l_retried: BOOLEAN
+		do
+			if l_retried or a_node.value (a_x).is_nan or a_node.value (a_x - 1.0e-4).is_nan or a_node.value (a_x + 1.0e-4).is_nan then
+				Result := {REAL_64}.nan
+			else
+				Result := calculus.derivative (agent a_node.value, a_x)
+			end
+		rescue
+			l_retried := True
+			retry
+		end
+
+	safe_integral (a_node: GC_NODE; a_a, a_b: REAL_64): REAL_64
+			-- The integral from `a_a' to `a_b' by simple_calculus, or NaN.
+		require
+			ordered: a_a < a_b
+		local
+			l_retried: BOOLEAN
+		do
+			if l_retried then
+				Result := {REAL_64}.nan
+			else
+				Result := calculus.integrate (agent a_node.value, a_a, a_b)
+			end
+		rescue
+			l_retried := True
+			retry
+		end
+
+	roots (a_node: GC_NODE; a_low, a_high: REAL_64): ARRAYED_LIST [REAL_64]
+			-- Roots in [a_low, a_high]: sign changes over 400 steps, refined by simple_math's
+			-- bisection, keeping only true zeros (not poles such as tan's).
+		require
+			ordered: a_low < a_high
+		local
+			i, n: INTEGER
+			x1, x2, y1, y2, r, l_step: REAL_64
+		do
+			create Result.make (4)
+			n := 400
+			l_step := (a_high - a_low) / n
+			from
+				i := 0
+				x1 := a_low
+				y1 := a_node.value (x1)
+			until
+				i >= n or Result.count >= 12
+			loop
+				x2 := a_low + (i + 1) * l_step
+				y2 := a_node.value (x2)
+				if not y1.is_nan and not y2.is_nan then
+					if y1 = 0.0 then
+						add_root (Result, x1)
+					elseif y1 * y2 < 0.0 then
+						r := math.bisection (agent a_node.value, x1, x2, 1.0e-10, 200)
+						if a_node.value (r).abs < 1.0e-6 then
+							add_root (Result, r)
+						end
+					end
+				end
+				x1 := x2
+				y1 := y2
+				i := i + 1
+			end
+		end
+
+	roots_text (a_node: GC_NODE; a_low, a_high: REAL_64): STRING_32
+		do
+			create Result.make_empty
+			if a_low < a_high then
+				across roots (a_node, a_low, a_high) as ic loop
+					if not Result.is_empty then
+						Result.append ({STRING_32} ", ")
+					end
+					Result.append (short (ic))
+				end
+			end
+			if Result.is_empty then
+				Result := {STRING_32} "none"
+			end
+		end
+
+feature {NONE} -- Implementation
+
+	mailbox: separate GUI_MAILBOX
+
+	post (a_mailbox: separate GUI_MAILBOX; a_text: STRING_32)
+		do
+			a_mailbox.put (Result_tag, a_text)
+		end
+
+	add_root (a_list: ARRAYED_LIST [REAL_64]; a_root: REAL_64)
+			-- Add `a_root' unless it repeats the last one.
+		do
+			if a_list.is_empty or else (a_list.last - a_root).abs > 1.0e-7 then
+				a_list.extend (a_root)
+			end
+		end
+
+	calculus: SIMPLE_CALCULUS
+		once
+			create Result
+		end
+
+	math: SIMPLE_MATH
+		once
+			create Result.make
+		end
+
+end
