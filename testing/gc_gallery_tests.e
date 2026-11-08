@@ -114,10 +114,15 @@ feature -- Tests
 			assert ("mirrored", main.root.base_direction = main.root.Direction_right_to_left)
 			assert ("expression stays left to right", main.expression_field.base_direction = main.root.Direction_left_to_right)
 			assert ("numbers stay left to right", main.roots_value.base_direction = main.root.Direction_left_to_right)
+			assert ("menu title in Hebrew", main.shown_menu_title ("file").same_string ({STRING_32} "קובץ"))
+			assert ("menu item in Hebrew", main.shown_menu_item ("table").same_string ({STRING_32} "טבלת ערכים"))
+			assert ("edit item in Hebrew", main.shown_menu_item ("copy").same_string ({STRING_32} "העתק"))
+			assert ("the way back stays English", main.shown_menu_item ("language").same_string ("English Interface"))
 			snapshot ("gallery_5_hebrew")
 			driver.invoke_menu (main.hebrew_item_id)
 			settle
 			assert ("english again", main.plot_button.text.same_string ("Plot"))
+			assert ("menus English again", main.shown_menu_item ("table").same_string ("Table of Values") and main.shown_menu_title ("file").same_string ("File"))
 		end
 
 	test_spoken_labels_reach_the_assistive_tree

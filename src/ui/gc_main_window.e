@@ -63,6 +63,34 @@ feature -- Access (the test driver and the gallery reach these)
 	table_item_id, hebrew_item_id, export_item_id: INTEGER
 			-- Menu item ids (for tests).
 
+	menu_titles: ARRAYED_LIST [TUPLE [menu: GUI_MENU; key: STRING]]
+			-- Top-level menus by text key.
+
+	menu_items: ARRAYED_LIST [TUPLE [menu: GUI_MENU; id: INTEGER; key: STRING]]
+			-- Menu items by text key.
+
+	shown_menu_item (a_key: STRING): STRING_32
+			-- The words the toolkit shows now on the item called `a_key' (tests).
+		do
+			create Result.make_empty
+			across menu_items as ic loop
+				if ic.key.same_string (a_key) then
+					Result := ic.menu.item_text (ic.id)
+				end
+			end
+		end
+
+	shown_menu_title (a_key: STRING): STRING_32
+			-- The words the toolkit shows now on the menu called `a_key' (tests).
+		do
+			create Result.make_empty
+			across menu_titles as ic loop
+				if ic.key.same_string (a_key) then
+					Result := ic.menu.shown_title
+				end
+			end
+		end
+
 	analyses_received: INTEGER
 			-- Current analysis results that came back from the worker (stale ones are dropped).
 
@@ -209,30 +237,79 @@ feature -- Drawing
 feature {NONE} -- Building
 
 	build_menus
+			-- Every menu and item is remembered under a key, so `apply_texts' can relabel it.
 		local
 			l_menu: GUI_MENU
 		do
-			l_menu := app.menu.add_menu ("File")
-			l_menu.add_item ("Open Session…", "primary+O", agent open_with_dialog)
-			l_menu.add_item ("Save Session…", "primary+S", agent save_with_dialog)
+			create menu_titles.make (4)
+			create menu_items.make (20)
+			l_menu := new_menu ("file")
+			l_menu.add_item (texts.menu_text ("open"), "primary+O", agent open_with_dialog)
+			remember (l_menu, "open")
+			l_menu.add_item (texts.menu_text ("save"), "primary+S", agent save_with_dialog)
+			remember (l_menu, "save")
 			l_menu.add_separator
-			l_menu.add_item ("Export Graph as PNG…", "primary+E", agent export_with_dialog)
+			l_menu.add_item (texts.menu_text ("export"), "primary+E", agent export_with_dialog)
+			remember (l_menu, "export")
 			export_item_id := l_menu.last_item_id
 			l_menu.add_separator
-			l_menu.add_role_item (l_menu.Role_quit, "Quit", "primary+Q", agent app.quit)
-			l_menu := app.menu.add_menu ("Edit")
-			l_menu.add_standard_edit_items
-			l_menu := app.menu.add_menu ("View")
-			l_menu.add_item ("Zoom In", "", agent zoom (0.8))
-			l_menu.add_item ("Zoom Out", "", agent zoom (1.25))
-			l_menu.add_item ("Reset View", "primary+R", agent reset_view)
+			l_menu.add_role_item (l_menu.Role_quit, texts.menu_text ("quit"), "primary+Q", agent app.quit)
+			remember (l_menu, "quit")
+			l_menu := new_menu ("edit")
+			l_menu.add_edit_item (l_menu.Role_undo, texts.menu_text ("undo"))
+			remember (l_menu, "undo")
+			l_menu.add_edit_item (l_menu.Role_redo, texts.menu_text ("redo"))
+			remember (l_menu, "redo")
 			l_menu.add_separator
-			l_menu.add_item ("Table of Values", "primary+T", agent toggle_table)
+			l_menu.add_edit_item (l_menu.Role_cut, texts.menu_text ("cut"))
+			remember (l_menu, "cut")
+			l_menu.add_edit_item (l_menu.Role_copy, texts.menu_text ("copy"))
+			remember (l_menu, "copy")
+			l_menu.add_edit_item (l_menu.Role_paste, texts.menu_text ("paste"))
+			remember (l_menu, "paste")
+			l_menu.add_edit_item (l_menu.Role_select_all, texts.menu_text ("select_all"))
+			remember (l_menu, "select_all")
+			l_menu := new_menu ("view")
+			l_menu.add_item (texts.menu_text ("zoom_in"), "", agent zoom (0.8))
+			remember (l_menu, "zoom_in")
+			l_menu.add_item (texts.menu_text ("zoom_out"), "", agent zoom (1.25))
+			remember (l_menu, "zoom_out")
+			l_menu.add_item (texts.menu_text ("reset_view"), "primary+R", agent reset_view)
+			remember (l_menu, "reset_view")
+			l_menu.add_separator
+			l_menu.add_item (texts.menu_text ("table"), "primary+T", agent toggle_table)
+			remember (l_menu, "table")
 			table_item_id := l_menu.last_item_id
-			l_menu.add_item ("Hebrew Interface", "", agent toggle_hebrew)
+			l_menu.add_item (texts.menu_text ("language"), "", agent toggle_hebrew)
+			remember (l_menu, "language")
 			hebrew_item_id := l_menu.last_item_id
-			l_menu := app.menu.add_menu ("Help")
-			l_menu.add_role_item (l_menu.Role_about, "About", "", agent show_about)
+			l_menu := new_menu ("help")
+			l_menu.add_role_item (l_menu.Role_about, texts.menu_text ("about"), "", agent show_about)
+			remember (l_menu, "about")
+		end
+
+	new_menu (a_key: STRING): GUI_MENU
+			-- A top-level menu titled by `a_key'.
+		do
+			Result := app.menu.add_menu (texts.menu_text (a_key))
+			menu_titles.extend ([Result, a_key])
+		end
+
+	remember (a_menu: GUI_MENU; a_key: STRING)
+			-- Record `a_menu''s last item under `a_key'.
+		do
+			menu_items.extend ([a_menu, a_menu.last_item_id, a_key])
+		end
+
+	relabel_menus
+			-- Put the current language's words on every menu and item.
+		do
+			across menu_titles as ic loop
+				ic.menu.set_title (texts.menu_text (ic.key))
+			end
+			across menu_items as ic loop
+				ic.menu.set_item_text (ic.id, texts.menu_text (ic.key))
+			end
 		end
 
 	build_window
@@ -377,6 +454,7 @@ feature {NONE} -- Building
 			-- Put the current language's text everywhere, and set the direction.
 		do
 			window.set_title (texts.title)
+			relabel_menus
 			function_title.set_text (texts.function_label)
 			expression_field.set_placeholder (texts.function_hint)
 			expression_field.set_accessible_label (texts.function_label)
@@ -396,7 +474,8 @@ feature {NONE} -- Building
 			if status_label.text.is_empty or status_label.text.same_string ("Ready") or status_label.text.same_string ({STRING_32} "מוכן") then
 				status_label.set_text (texts.ready)
 			end
-			root.set_base_direction (if texts.is_hebrew then root.Direction_right_to_left else root.Direction_left_to_right end)
+				-- On the window, so the menu bar mirrors too (it sits outside the content).
+			window.set_base_direction (if texts.is_hebrew then root.Direction_right_to_left else root.Direction_left_to_right end)
 				-- Expressions and numbers are mathematics: always left to right.
 			across {ARRAY [GUI_WIDGET]} <<expression_field, x0_field, lower_field, upper_field, derivative_value, integral_value, roots_value, canvas>> as ic loop
 				ic.set_base_direction (root.Direction_left_to_right)
