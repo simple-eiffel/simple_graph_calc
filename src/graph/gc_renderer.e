@@ -13,12 +13,13 @@ inherit
 
 feature -- Drawing
 
-	render (a_surface: CAIRO_SURFACE; a_view: GC_VIEW; a_plots: LIST [GC_PLOT]; a_roots: LIST [REAL_64]; a_dark: BOOLEAN; a_scale: INTEGER)
-			-- Draw everything onto `a_surface', whose pixels are `a_scale' times logical pixels.
+	render (a_surface: CAIRO_SURFACE; a_view: GC_VIEW; a_plots: LIST [GC_PLOT]; a_roots: LIST [REAL_64]; a_dark: BOOLEAN; a_scale: REAL_64)
+			-- Draw everything onto `a_surface', whose pixels are `a_scale' times logical pixels
+			-- (fractional where the platform is: Windows at 125 %, GTK's fractional scaling).
 		require
 			valid: a_surface.is_valid
 			sized: a_surface.width > 0 and a_surface.height > 0
-			scale: a_scale >= 1
+			scale: a_scale > 0.0
 		local
 			cr: CAIRO_CONTEXT
 			w, h: INTEGER
@@ -53,7 +54,7 @@ feature -- Colors
 
 feature {NONE} -- Implementation
 
-	draw_grid (cr: CAIRO_CONTEXT; v: GC_VIEW; w, h: INTEGER; a_dark: BOOLEAN; s: INTEGER)
+	draw_grid (cr: CAIRO_CONTEXT; v: GC_VIEW; w, h: INTEGER; a_dark: BOOLEAN; s: REAL_64)
 		local
 			l_step, x, y, px, py, l_axis_x, l_axis_y: REAL_64
 			l_label: STRING_32
@@ -104,7 +105,7 @@ feature {NONE} -- Implementation
 			end
 		end
 
-	draw_curve (cr: CAIRO_CONTEXT; v: GC_VIEW; p: GC_PLOT; w, h: INTEGER; s: INTEGER)
+	draw_curve (cr: CAIRO_CONTEXT; v: GC_VIEW; p: GC_PLOT; w, h: INTEGER; s: REAL_64)
 			-- Sample once per pixel column; lift the pen at NaN and at jumps larger than the view.
 		local
 			i: INTEGER
