@@ -32,7 +32,7 @@ open "dist/Eiffel Graphing Calculator.app"
 
 That `ec` line finalizes without contracts, which is what an application for people to use wants; the test builds keep their contracts. `ec` can also exit 0 when its C step fails, so check that the executable it names exists before running the script.
 
-The script uses only tools that ship with macOS. It writes `Info.plist` (named "Eiffel Graphing Calculator", bundle id `org.simple-eiffel.graph-calc`, English and Hebrew), builds the icon from `packaging/macos/app_icon_1024.png`, and signs the bundle ad hoc, which Apple silicon requires. The bundle needs the same Homebrew libraries the build used, so it runs on Macs set up like the build machine. Bundling those libraries, and a Developer ID signature for other people's Macs, are later steps.
+The script uses only tools that ship with macOS. It writes `Info.plist` (named "Eiffel Graphing Calculator", bundle id `org.simple-eiffel.graph-calc`, English and Hebrew), builds the icon from `packaging/macos/app_icon_1024.png`, copies the libraries the calculator needs from outside the system (Homebrew's cairo and the 15 libraries it pulls in) into `Contents/Frameworks` and points the app at those copies (`scripts/bundle_macos_libraries.sh`), and signs everything ad hoc, which Apple silicon requires. The app is about 8 MB and runs on a Mac without Homebrew. It is not yet signed with a Developer ID or notarized, so on another person's Mac it opens through Gatekeeper's "Open anyway" (System Settings, Privacy & Security) the first time.
 
 ## Regenerating the parser
 
