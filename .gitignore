@@ -3,3 +3,7 @@ EIFGENs/
 !docs/**/*.png
 !packaging/**/*.png
 dist/
+# Windows build and test-run artifacts
+*.rc
+sw_session.log
+gallery_*.json
