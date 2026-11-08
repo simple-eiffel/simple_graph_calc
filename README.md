@@ -53,6 +53,15 @@ The shortcuts use Ctrl (Ctrl+O, S, E, Q; Ctrl+R resets the view and Ctrl+T opens
 
 **Known limit on Windows:** the window keeps the size the program asks for (GTK and AppKit grow a window to fit its content), so the lower part of the analysis panel is cut off.
 
+**Not yet checked by hand on Windows.** These are expected to work, from the code and from the shared tests, but nobody has tried them yet by hand:
+- the Ctrl shortcuts listed above (the menus declare them as "primary" shortcuts, and primary is Ctrl on Windows);
+- the Edit menu (Undo, Redo, Cut, Copy, Paste, Select All) in the text fields;
+- switching between light and dark while the calculator is open (it follows the Windows setting at launch, and the shared test `system_colors_follow_the_appearance` passes);
+- PNG export at 125 % and 150 % display scaling (checked at 100 % only);
+- redrawing the graph while a window edge is being dragged.
+
+**Found in the code, on every platform, not yet confirmed by a run:** the Table of values refreshes after zoom, Reset view and choosing another function, but not after panning with the arrow keys or the mouse, which only redraw the graph.
+
 ## Regenerating the parser
 
 The generated `src/expression/gc_parser.e` is committed; you only need geyacc if you change the grammar:
