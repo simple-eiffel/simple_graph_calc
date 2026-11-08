@@ -218,7 +218,7 @@ feature -- Drawing
 			h := canvas.pixel_height
 			if w > 0 and h > 0 then
 				create l_image.make (w, h)
-				renderer.render (l_image, view, plots, roots, app.is_dark, canvas.scale_factor)
+				renderer.render (l_image, view, plots, roots, app.is_dark, canvas.scale)
 				canvas.present (l_image)
 				if attached last_image as al_old then
 					al_old.destroy
