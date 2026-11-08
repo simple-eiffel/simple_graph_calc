@@ -18,7 +18,7 @@ Status: 0.1. On Linux (GTK 4, WSLg), macOS (AppKit) and Windows (simple_widgets)
 
 On macOS the menus are in the system menu bar, so they do not appear in the window pictures. The Hebrew interface translates the menus too; the Hebrew wording is machine-written.
 
-On Windows the window keeps the size the program asks for (GTK and AppKit grow a window to fit its content), so the lower part of the analysis panel is cut off in these pictures; the table window opens as a window of its own beside the main one.
+On Windows, as on the others, the window opens large enough for its content; the table window opens as a window of its own beside the main one. The Windows pictures were taken at 150% scaling, where the calculator's content is taller than the screen, so its window stops at the screen's height and the zoom buttons sit just below it.
 
 ## Build it yourself on a Mac
 
@@ -121,7 +121,7 @@ Then double-click `bin\simple_graph_calc.exe`. At run time it needs only `cairo.
 
 The shortcuts use Ctrl (Ctrl+O, S, E, Q; Ctrl+R resets the view and Ctrl+T opens the table), the menu bar sits inside the window, and light and dark follow the Windows setting.
 
-**Known limit on Windows:** the window keeps the size the program asks for (GTK and AppKit grow a window to fit its content), so the lower part of the analysis panel is cut off.
+The window opens large enough for its content, as on Linux and macOS, but never taller than the screen: where the content is taller than the screen (at 150% scaling on the display these pictures came from), the zoom buttons sit below the bottom edge.
 
 What has been checked, 2026-11-08: the build on the maintainers' machine, and the program running from a folder holding only the executable and `cairo.dll` with nothing on PATH. Unlike the Mac steps, these steps have not yet been run from fresh clones; the clone list comes from the ECFs.
 
