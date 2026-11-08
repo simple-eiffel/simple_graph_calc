@@ -1,7 +1,7 @@
 ﻿note
 	description: "[
 		The scripted session, the same on every platform: type a function, plot it,
-		let the worker analyse it, zoom, open the table window, switch to dark and to
+		let the worker analyze it, zoom, open the table window, switch to dark and to
 		the Hebrew interface, and snapshot each step (gallery_*.png).
 	]"
 
@@ -132,7 +132,7 @@ feature -- Tests
 			l_tree := driver.describe_accessibility (main.window)
 			assert ("square root spoken", l_tree.has_substring ("button: square root"))
 			assert ("theta spoken", l_tree.has_substring ("button: theta"))
-			assert ("field labelled", l_tree.has_substring ("text-box: Function"))
+			assert ("field labeled", l_tree.has_substring ("text-box: Function"))
 		end
 
 	test_export_png
