@@ -386,6 +386,9 @@ feature {NONE} -- Building
 			create derivative_value.make ("")
 			create integral_value.make ("")
 			create roots_value.make ("")
+				-- Up to six roots and a count: wrap rather than cut it off, on every toolkit
+				-- (GTK ellipsized it at the panel's width).
+			roots_value.set_wrap_width (36)
 			l_results.put (derivative_title, 1, 1)
 			l_results.put (derivative_value, 1, 2)
 			l_results.put (integral_title, 2, 1)
