@@ -74,24 +74,56 @@ It then signs everything ad hoc, which Apple silicon requires.
 
 The result is about 8 MB and runs without Homebrew. It is built for the Mac that builds it. Anyone who wants it on their own Mac builds it the same way, from source.
 
-## A Windows application
+## Build it yourself on Windows
 
-To run the calculator as an ordinary Windows program, finalize the `simple_graph_calc` target (not the tests target) and put it in `bin\` with the one DLL it needs:
+**1. Tools, once.** [EiffelStudio 25.02](https://www.eiffel.org/downloads) and Visual Studio's C++ build tools (EiffelStudio compiles its generated C with them).
+
+**2. The source.** The calculator and the libraries it builds on, side by side in one folder. On Windows the GUI runs over simple_widgets, which brings in more libraries than on the Mac:
 
 ```
-ec.sh release -config simple_graph_calc.ecf -target simple_graph_calc
+mkdir simple_eiffel && cd simple_eiffel
+for r in simple_graph_calc simple_gui simple_cairo simple_mml simple_widgets simple_shaping \
+         simple_datetime simple_document simple_markdown simple_shell simple_audio simple_file \
+         simple_encoding simple_speech simple_ai_client simple_logger simple_json simple_decimal \
+         simple_zstring simple_reflection simple_factory simple_process simple_sql simple_sorter \
+         eiffel_sqlite_2025 simple_uuid simple_ffmpeg simple_onnx simple_vision simple_regex \
+         simple_math simple_calculus; do
+  git clone https://github.com/simple-eiffel/$r.git
+done
+```
+
+**3. Cairo.** simple_cairo links `simple_cairo\lib\cairo.lib` and the program loads `cairo.dll` at run time. Neither file is in git: put a 64-bit Cairo build's import library at `simple_cairo\lib\cairo.lib` and its `cairo.dll` where step 5 says (see simple_cairo's README).
+
+**4. The environment** (Git Bash shown; set the same variables in System Properties to keep them). EiffelStudio's own copy of Gobo is enough:
+
+```
+export ISE_EIFFEL="/c/Program Files/Eiffel Software/EiffelStudio 25.02 Standard"
+export ISE_PLATFORM=win64
+export ISE_LIBRARY="$ISE_EIFFEL"
+export GOBO_LIBRARY="$ISE_EIFFEL/contrib/library/gobo/library"
+export PATH="$ISE_EIFFEL/studio/spec/$ISE_PLATFORM/bin:$PATH"
+export SIMPLE_EIFFEL=$PWD
+```
+
+**5. Build, and put it in `bin\`:**
+
+```
+cd simple_graph_calc
+ec -batch -config simple_graph_calc.ecf -target simple_graph_calc -finalize -c_compile
 mkdir -p bin
-cp EIFGENs/simple_graph_calc/F_code/simple_graph_calc_lean.exe bin/simple_graph_calc.exe
-cp $SIMPLE_EIFFEL/simple_cairo/cairo.dll bin/
+cp EIFGENs/simple_graph_calc/F_code/simple_graph_calc.exe bin/
+cp ../simple_cairo/cairo.dll bin/
 ```
 
-`ec.sh release` builds two executables: `simple_graph_calc_lean.exe` without contracts, which is the application for people to use, and `simple_graph_calc_dbc.exe` with them, for chasing a problem. As on the Mac, check that the executable exists before copying: `ec` can exit 0 when its C step fails.
+That `ec` line finalizes without contracts, as an application for people to use should; the test target (`simple_graph_calc_tests`) keeps them. `ec` can exit 0 even when its C step fails, so check that the executable exists before copying. (On the maintainers' machine, `ec.sh release` does the same and also leaves a `simple_graph_calc_dbc.exe` with contracts.)
 
-Then double-click `bin\simple_graph_calc.exe`. It needs nothing else at run time: `cairo.dll` (from simple_cairo) beside it, and otherwise only DLLs that ship with Windows. There is no Visual C++ runtime to install. `bin\` is not committed (it is in `.gitignore`), so build it yourself after cloning.
+Then double-click `bin\simple_graph_calc.exe`. At run time it needs only `cairo.dll` beside it; everything else it loads ships with Windows, and there is no Visual C++ runtime to install. `bin\` is not committed (it is in `.gitignore`).
 
 The shortcuts use Ctrl (Ctrl+O, S, E, Q; Ctrl+R resets the view and Ctrl+T opens the table), the menu bar sits inside the window, and light and dark follow the Windows setting.
 
 **Known limit on Windows:** the window keeps the size the program asks for (GTK and AppKit grow a window to fit its content), so the lower part of the analysis panel is cut off.
+
+What has been checked, 2026-11-08: the build on the maintainers' machine, and the program running from a folder holding only the executable and `cairo.dll` with nothing on PATH. Unlike the Mac steps, these steps have not yet been run from fresh clones; the clone list comes from the ECFs.
 
 ## Regenerating the parser
 
