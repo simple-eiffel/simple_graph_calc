@@ -102,6 +102,8 @@ feature -- Commands
 
 	clear_all
 		do
+				-- Any analysis still running answers a function that is gone: drop its result.
+			requests_sent := requests_sent + 1
 			plots.wipe_out
 			roots.wipe_out
 			function_list.wipe_out
