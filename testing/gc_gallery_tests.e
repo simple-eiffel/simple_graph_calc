@@ -92,6 +92,12 @@ feature -- Tests
 			if attached main.table as al_t then
 				driver.pump_until_idle (200)
 				assert ("table png", driver.snapshot (al_t.window, create {PATH}.make_from_string ("gallery_3_table.png")))
+					-- Close it through the window's own close request, so the main window has
+					-- the focus again: GTK draws an unfocused window in its "backdrop" style, and
+					-- the later pictures would show every control greyed as if disabled.
+				driver.request_close (al_t.window)
+				settle
+				assert ("table closed", main.table = Void or else al_t.window.is_closed)
 			end
 			snapshot ("gallery_3_two_plots")
 		end
