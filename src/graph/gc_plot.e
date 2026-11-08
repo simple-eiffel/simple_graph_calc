@@ -1,5 +1,5 @@
 note
-	description: "One function on the graph: its text, parsed tree and colour."
+	description: "One function on the graph: its text, parsed tree and color."
 
 class
 	GC_PLOT

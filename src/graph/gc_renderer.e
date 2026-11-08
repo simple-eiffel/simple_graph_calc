@@ -40,13 +40,13 @@ feature -- Drawing
 			a_surface.flush.do_nothing
 		end
 
-feature -- Colours
+feature -- Colors
 
 	Light_background: NATURAL_32 = 0xFFFFFF
 	Dark_background: NATURAL_32 = 0x1E1E1E
 
 	Palette: ARRAY [NATURAL_32]
-			-- Colours for successive plots, readable on light and dark backgrounds.
+			-- Colors for successive plots, readable on light and dark backgrounds.
 		once
 			Result := <<0x2F7FD8, 0xE8743B, 0x2CA02C, 0xD62728, 0x9467BD, 0x17BECF>>
 		end
