@@ -93,6 +93,10 @@ cat > "$app/Contents/Info.plist" <<PLIST
 PLIST
 plutil -lint "$app/Contents/Info.plist" >/dev/null
 
+# Self-contained: the libraries from outside the system (Homebrew's cairo and its own) go
+# inside the bundle, so the app runs on a Mac without Homebrew.
+sh "$here/scripts/bundle_macos_libraries.sh" "$app" >/dev/null
+
 # Ad-hoc signature: required for arm64 code, and it seals the bundle's contents.
 codesign --force --sign - "$app" >/dev/null 2>&1
 codesign --verify "$app"
