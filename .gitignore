@@ -1,3 +1,5 @@
 EIFGENs/
 *.png
 !docs/**/*.png
+!packaging/**/*.png
+dist/

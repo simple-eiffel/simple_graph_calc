@@ -20,6 +20,18 @@ On macOS the menus are in the system menu bar, so they do not appear in the wind
 
 Menus stay in English in 0.1 (simple_gui cannot yet relabel menu items). The Hebrew wording is machine-written.
 
+## A Mac application
+
+To open the calculator from Finder, the Dock or Spotlight, finalize the `simple_graph_calc` target and wrap it in an app bundle:
+
+```
+ec -batch -config simple_graph_calc.ecf -target simple_graph_calc -finalize -c_compile
+sh scripts/make_macos_app.sh EIFGENs/simple_graph_calc/F_code/simple_graph_calc
+open "dist/Eiffel Graphing Calculator.app"
+```
+
+The script uses only tools that ship with macOS. It writes `Info.plist` (named "Eiffel Graphing Calculator", bundle id `org.simple-eiffel.graph-calc`, English and Hebrew), builds the icon from `packaging/macos/app_icon_1024.png`, and signs the bundle ad hoc, which Apple silicon requires. The bundle needs the same Homebrew libraries the build used, so it runs on Macs set up like the build machine. Bundling those libraries, and a Developer ID signature for other people's Macs, are later steps.
+
 ## Regenerating the parser
 
 The generated `src/expression/gc_parser.e` is committed; you only need geyacc if you change the grammar:
