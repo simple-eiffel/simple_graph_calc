@@ -96,7 +96,7 @@ feature -- Navigation
 		end
 
 	zoom (a_factor: REAL_64)
-			-- Scale the view about its centre; `a_factor' < 1 zooms in.
+			-- Scale the view about its center; `a_factor' < 1 zooms in.
 		require
 			positive: a_factor > 0.0
 		local
