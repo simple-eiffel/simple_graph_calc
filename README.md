@@ -30,6 +30,8 @@ sh scripts/make_macos_app.sh EIFGENs/simple_graph_calc/F_code/simple_graph_calc
 open "dist/Eiffel Graphing Calculator.app"
 ```
 
+That `ec` line finalizes without contracts, which is what an application for people to use wants; the test builds keep their contracts. `ec` can also exit 0 when its C step fails, so check that the executable it names exists before running the script.
+
 The script uses only tools that ship with macOS. It writes `Info.plist` (named "Eiffel Graphing Calculator", bundle id `org.simple-eiffel.graph-calc`, English and Hebrew), builds the icon from `packaging/macos/app_icon_1024.png`, and signs the bundle ad hoc, which Apple silicon requires. The bundle needs the same Homebrew libraries the build used, so it runs on Macs set up like the build machine. Bundling those libraries, and a Developer ID signature for other people's Macs, are later steps.
 
 ## Regenerating the parser
