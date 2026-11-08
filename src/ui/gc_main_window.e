@@ -479,8 +479,8 @@ feature {NONE} -- Building
 			end
 				-- On the window, so the menu bar mirrors too (it sits outside the content).
 			window.set_base_direction (if texts.is_hebrew then root.Direction_right_to_left else root.Direction_left_to_right end)
-				-- Expressions and numbers are mathematics: always left to right.
-			across {ARRAY [GUI_WIDGET]} <<expression_field, x0_field, lower_field, upper_field, derivative_value, integral_value, roots_value, canvas>> as ic loop
+				-- Expressions, the list of formulas and numbers are mathematics: always left to right.
+			across {ARRAY [GUI_WIDGET]} <<expression_field, function_list, x0_field, lower_field, upper_field, derivative_value, integral_value, roots_value, canvas>> as ic loop
 				ic.set_base_direction (root.Direction_left_to_right)
 			end
 			if attached table as al_table then
