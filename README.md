@@ -7,11 +7,16 @@ A scientific graphing calculator written in Eiffel on **simple_gui**, so it is a
 - **Graphs** drawn with simple_cairo on a native canvas: pan with the arrow keys or the mouse, zoom with + and −.
 - **Analysis** (f′(x₀), ∫ from a to b, roots) runs on a SCOOP worker, so the window stays responsive.
 
-Status: 0.1. On Linux (GTK 4, WSLg) all 16 tests pass: 7 for the grammar, 9 for a scripted session through simple_gui's test driver that plots, analyses on the worker, zooms, opens the table window, and switches to dark and to the Hebrew interface. macOS: in progress.
+Status: 0.1. On Linux (GTK 4, WSLg) and macOS (AppKit) all 19 tests pass: 7 for the grammar, 12 for a scripted session through simple_gui's test driver that plots, analyses on the worker, zooms, opens the table window, exports a PNG, saves and reopens a session, and switches to dark and to the Hebrew interface. The pictures below come from that session, on each platform.
 
-| Light, with analysis | Dark, two functions | Hebrew interface (mirrored) |
+| | Linux (GTK 4) | macOS (AppKit) |
 |---|---|---|
-| ![light](docs/gallery/linux/gallery_2_analysis.png) | ![dark](docs/gallery/linux/gallery_4_dark.png) | ![hebrew](docs/gallery/linux/gallery_5_hebrew.png) |
+| Light, with analysis | ![light, Linux](docs/gallery/linux/gallery_2_analysis.png) | ![light, macOS](docs/gallery/macos/gallery_2_analysis.png) |
+| Dark, two functions | ![dark, Linux](docs/gallery/linux/gallery_4_dark.png) | ![dark, macOS](docs/gallery/macos/gallery_4_dark.png) |
+| Hebrew interface (mirrored) | ![Hebrew, Linux](docs/gallery/linux/gallery_5_hebrew.png) | ![Hebrew, macOS](docs/gallery/macos/gallery_5_hebrew.png) |
+| Table of values | ![table, Linux](docs/gallery/linux/gallery_3_table.png) | ![table, macOS](docs/gallery/macos/gallery_3_table.png) |
+
+On macOS the menus are in the system menu bar, so they do not appear in the window pictures.
 
 Menus stay in English in 0.1 (simple_gui cannot yet relabel menu items). The Hebrew wording is machine-written.
 

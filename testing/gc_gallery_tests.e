@@ -21,6 +21,9 @@ feature {NONE} -- Initialization
 			app := a_app
 			create driver
 			create main.make (a_app)
+				-- The gallery starts in light, whatever the machine's own setting: a Mac set
+				-- to dark otherwise shot the "light" pictures dark.
+			driver.set_dark (False)
 			main.show
 			settle
 		end
