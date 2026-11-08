@@ -34,6 +34,25 @@ That `ec` line finalizes without contracts, which is what an application for peo
 
 The script uses only tools that ship with macOS. It writes `Info.plist` (named "Eiffel Graphing Calculator", bundle id `org.simple-eiffel.graph-calc`, English and Hebrew), builds the icon from `packaging/macos/app_icon_1024.png`, copies the libraries the calculator needs from outside the system (Homebrew's cairo and the 15 libraries it pulls in) into `Contents/Frameworks` and points the app at those copies (`scripts/bundle_macos_libraries.sh`), and signs everything ad hoc, which Apple silicon requires. The app is about 8 MB and runs on a Mac without Homebrew. It is not signed with a Developer ID or notarized, and will not be: build it from source on your own Mac, as above. A copy carried to another Mac opens through Gatekeeper's "Open anyway" (System Settings, Privacy & Security) the first time.
 
+## A Windows application
+
+To run the calculator as an ordinary Windows program, finalize the `simple_graph_calc` target (not the tests target) and put it in `bin\` with the one DLL it needs:
+
+```
+ec.sh release -config simple_graph_calc.ecf -target simple_graph_calc
+mkdir -p bin
+cp EIFGENs/simple_graph_calc/F_code/simple_graph_calc_lean.exe bin/simple_graph_calc.exe
+cp $SIMPLE_EIFFEL/simple_cairo/cairo.dll bin/
+```
+
+`ec.sh release` builds two executables: `simple_graph_calc_lean.exe` without contracts, which is the application for people to use, and `simple_graph_calc_dbc.exe` with them, for chasing a problem. As on the Mac, check that the executable exists before copying: `ec` can exit 0 when its C step fails.
+
+Then double-click `bin\simple_graph_calc.exe`. It needs nothing else at run time: `cairo.dll` (from simple_cairo) beside it, and otherwise only DLLs that ship with Windows. There is no Visual C++ runtime to install. `bin\` is not committed (it is in `.gitignore`), so build it yourself after cloning.
+
+The shortcuts use Ctrl (Ctrl+O, S, E, Q; Ctrl+R resets the view and Ctrl+T opens the table), the menu bar sits inside the window, and light and dark follow the Windows setting.
+
+**Known limit on Windows:** the window keeps the size the program asks for (GTK and AppKit grow a window to fit its content), so the lower part of the analysis panel is cut off.
+
 ## Regenerating the parser
 
 The generated `src/expression/gc_parser.e` is committed; you only need geyacc if you change the grammar:

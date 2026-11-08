@@ -7,3 +7,5 @@ dist/
 *.rc
 sw_session.log
 gallery_*.json
+# the Windows application, built locally (see README)
+bin/
