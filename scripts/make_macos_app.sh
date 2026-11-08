@@ -33,6 +33,9 @@ case "$app" in
 	*.app) rm -rf "$app" ;;
 esac
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+# One folder per language the app speaks: Finder's "Get Info" and the system read these, even
+# empty (the calculator chooses its words itself).
+mkdir -p "$app/Contents/Resources/en.lproj" "$app/Contents/Resources/he.lproj"
 cp "$exe" "$app/Contents/MacOS/simple_graph_calc"
 
 # The icon: every size macOS asks for, from the 1024 px master.
