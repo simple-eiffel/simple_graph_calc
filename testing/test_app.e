@@ -12,11 +12,13 @@ feature {NONE} -- Initialization
 	make
 		local
 			p: GC_PARSER_TESTS
+			a: GC_ANALYSIS_TESTS
 			g: GC_GALLERY_TESTS
 			l_app: GUI_APPLICATION
 		do
 			print ("simple_graph_calc tests%N%N=== EXPRESSION GRAMMAR (geyacc) ===%N")
 			create p
+			create a
 			run_test (agent p.test_precedence, "precedence")
 			run_test (agent p.test_implicit_multiplication, "implicit_multiplication")
 			run_test (agent p.test_unicode_operators_and_greek, "unicode_operators_and_greek")
@@ -24,6 +26,11 @@ feature {NONE} -- Initialization
 			run_test (agent p.test_domain_gives_nan, "domain_gives_nan")
 			run_test (agent p.test_errors_are_reported, "errors_are_reported")
 			run_test (agent p.test_two_variables_message, "two_variables_message")
+			print ("%N=== ANALYSIS ===%N")
+			run_test (agent a.test_touch_zero_roots_are_found, "touch_zero_roots_are_found")
+			run_test (agent a.test_touch_and_crossing_together, "touch_and_crossing_together")
+			run_test (agent a.test_near_misses_are_not_roots, "near_misses_are_not_roots")
+			run_test (agent a.test_corner_has_no_derivative, "corner_has_no_derivative")
 			print ("%N=== THE WINDOW (scripted gallery) ===%N")
 			create l_app.make ("Eiffel Graphing Calculator tests", "org.simple-eiffel.graph-calc-tests")
 			if l_app.is_available then
@@ -32,6 +39,7 @@ feature {NONE} -- Initialization
 				run_test (agent g.test_worker_analysis_arrives, "worker_analysis_arrives")
 				run_test (agent g.test_zoom_changes_the_view, "zoom_changes_the_view")
 				run_test (agent g.test_second_plot_and_table_window, "second_plot_and_table_window")
+				run_test (agent g.test_table_follows_panning, "table_follows_panning")
 				run_test (agent g.test_dark_appearance, "dark_appearance")
 				run_test (agent g.test_hebrew_interface_mirrors, "hebrew_interface_mirrors")
 				run_test (agent g.test_spoken_labels_reach_the_assistive_tree, "spoken_labels_reach_the_assistive_tree")
