@@ -545,6 +545,7 @@ feature {NONE} -- Events
 				drag_x := a_x
 				drag_y := a_y
 				render
+				refresh_table
 			end
 		end
 
@@ -552,10 +553,10 @@ feature {NONE} -- Events
 			-- Arrow keys pan by a tenth; + and - zoom; 0 resets (GDK key values, the shared vocabulary).
 		do
 			inspect a_code
-			when 0xff51 then view.pan (-0.1, 0.0); render
-			when 0xff53 then view.pan (0.1, 0.0); render
-			when 0xff52 then view.pan (0.0, 0.1); render
-			when 0xff54 then view.pan (0.0, -0.1); render
+			when 0xff51 then view.pan (-0.1, 0.0); render; refresh_table
+			when 0xff53 then view.pan (0.1, 0.0); render; refresh_table
+			when 0xff52 then view.pan (0.0, 0.1); render; refresh_table
+			when 0xff54 then view.pan (0.0, -0.1); render; refresh_table
 			else
 				if a_character = '+' or a_character = '=' then
 					zoom (0.8)

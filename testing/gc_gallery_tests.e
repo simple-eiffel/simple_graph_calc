@@ -102,6 +102,33 @@ feature -- Tests
 			snapshot ("gallery_3_two_plots")
 		end
 
+	test_table_follows_panning
+			-- Panning (an arrow key, or a drag) moves the Table of values with the view, as
+			-- zoom and Reset view always did.
+		local
+			l_first: STRING_32
+		do
+			driver.invoke_menu (main.table_item_id)
+			settle
+			if attached main.table as al_t then
+				l_first := al_t.rows.i_th (1)
+				main.canvas.key_actions.call ([0xff53, {CHARACTER_32} ' ', 0])
+				settle
+				assert ("the arrow key moved the table: " + al_t.rows.i_th (1).out, not al_t.rows.i_th (1).same_string (l_first))
+				l_first := al_t.rows.i_th (1)
+				main.canvas.pointer_actions.call ([1, 200, 200, 1, 0])
+				main.canvas.pointer_actions.call ([3, 160, 200, 1, 0])
+				main.canvas.pointer_actions.call ([2, 160, 200, 1, 0])
+				settle
+				assert ("the drag moved it too: " + al_t.rows.i_th (1).out, not al_t.rows.i_th (1).same_string (l_first))
+				driver.request_close (al_t.window)
+				settle
+			else
+				assert ("table open", False)
+			end
+			driver.perform_click (main.reset_button)
+		end
+
 	test_dark_appearance
 		do
 			driver.set_dark (True)

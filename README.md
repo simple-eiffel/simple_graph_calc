@@ -6,6 +6,8 @@ A scientific graphing calculator written in Eiffel on **simple_gui**: one progra
 - **Maths** from simple_math (functions, root bisection) and simple_calculus (derivative, integral).
 - **Graphs** drawn with simple_cairo on a native canvas: pan with the arrow keys or the mouse, zoom with + and −.
 - **Analysis** (f′(x₀), ∫ from a to b, roots) runs on a SCOOP worker, so the window stays responsive.
+  - Roots include zeros the graph only touches without crossing, such as abs(sin(x)) at kπ and x² at 0.
+  - At a corner, where the slopes from the left and the right disagree (abs(sin(x)) at 0), f′ is reported as undefined, not as 0.
 
 Status: 0.1. On Linux (GTK 4, WSLg), macOS (AppKit) and Windows (simple_widgets) all 19 tests pass: 7 for the grammar, 12 for a scripted session through simple_gui's test driver that plots, analyses on the worker, zooms, opens the table window, exports a PNG, saves and reopens a session, and switches to dark and to the Hebrew interface. The pictures below come from that session, on each platform.
 
@@ -105,19 +107,21 @@ export PATH="$ISE_EIFFEL/studio/spec/$ISE_PLATFORM/bin:$PATH"
 export SIMPLE_EIFFEL=$PWD
 ```
 
-**5. Build, and put it in `bin\`:**
+**5. Build, and put it in `bin\windows`:**
 
 ```
 cd simple_graph_calc
 ec -batch -config simple_graph_calc.ecf -target simple_graph_calc -finalize -c_compile
-mkdir -p bin
-cp EIFGENs/simple_graph_calc/F_code/simple_graph_calc.exe bin/
-cp ../simple_cairo/cairo.dll bin/
+mkdir -p bin/windows
+cp EIFGENs/simple_graph_calc/F_code/simple_graph_calc.exe bin/windows/
+cp ../simple_cairo/cairo.dll bin/windows/
 ```
 
 That `ec` line finalizes without contracts, as an application for people to use should; the test target (`simple_graph_calc_tests`) keeps them. `ec` can exit 0 even when its C step fails, so check that the executable exists before copying. (On the maintainers' machine, `ec.sh release` does the same and also leaves a `simple_graph_calc_dbc.exe` with contracts.)
 
-Then double-click `bin\simple_graph_calc.exe`. At run time it needs only `cairo.dll` beside it; everything else it loads ships with Windows, and there is no Visual C++ runtime to install. `bin\` is not committed (it is in `.gitignore`).
+Then double-click `bin\windows\simple_graph_calc.exe`. At run time it needs only `cairo.dll` beside it; everything else it loads ships with Windows, and there is no Visual C++ runtime to install. `bin\` is not committed (it is in `.gitignore`).
+
+The Linux build sits in `bin/linux`: run it from WSL or a Linux desktop with `./bin/linux/simple_graph_calc`. It needs GTK 4 and Cairo installed.
 
 The shortcuts use Ctrl (Ctrl+O, S, E, Q; Ctrl+R resets the view and Ctrl+T opens the table), the menu bar sits inside the window, and light and dark follow the Windows setting.
 
@@ -131,8 +135,6 @@ What has been checked, 2026-11-08: the build on the maintainers' machine, and th
 - switching between light and dark while the calculator is open (it follows the Windows setting at launch, and the shared test `system_colors_follow_the_appearance` passes);
 - PNG export at 125 % and 150 % display scaling (checked at 100 % only);
 - redrawing the graph while a window edge is being dragged.
-
-**Found in the code, on every platform, not yet confirmed by a run:** the Table of values refreshes after zoom, Reset view and choosing another function, but not after panning with the arrow keys or the mouse, which only redraw the graph.
 
 ## Regenerating the parser
 

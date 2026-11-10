@@ -79,11 +79,14 @@ feature -- Access (for tests)
 feature -- Calculations
 
 	safe_derivative (a_node: GC_NODE; a_x: REAL_64): REAL_64
-			-- f'(a_x) by simple_calculus, or NaN where f is undefined nearby.
+			-- f'(a_x) by simple_calculus, or NaN ("undefined") where f is undefined nearby or
+			-- where f has a corner: the slopes from the left and from the right disagree.
 		local
 			l_retried: BOOLEAN
 		do
-			if l_retried or a_node.value (a_x).is_nan or a_node.value (a_x - 1.0e-4).is_nan or a_node.value (a_x + 1.0e-4).is_nan then
+			if l_retried or a_node.value (a_x).is_nan or a_node.value (a_x - 1.0e-4).is_nan or a_node.value (a_x + 1.0e-4).is_nan
+				or else is_corner (a_node, a_x)
+			then
 				Result := {REAL_64}.nan
 			else
 				Result := calculus.derivative (agent a_node.value, a_x)
@@ -91,6 +94,21 @@ feature -- Calculations
 		rescue
 			l_retried := True
 			retry
+		end
+
+	is_corner (a_node: GC_NODE; a_x: REAL_64): BOOLEAN
+			-- Do the one-sided slopes at `a_x' disagree (abs(sin(x)) at 0: -1 and 1)? With a
+			-- step of a millionth, a smooth function's two slopes differ by about the step times
+			-- f'', far inside the tolerance: a thousandth of the larger slope, or of 1.
+		local
+			h, f0, l_left, l_right: REAL_64
+		do
+			h := 1.0e-6 * a_x.abs.max (1.0)
+			f0 := a_node.value (a_x)
+			l_left := (f0 - a_node.value (a_x - h)) / h
+			l_right := (a_node.value (a_x + h) - f0) / h
+			Result := not l_left.is_nan and not l_right.is_nan
+				and then (l_left - l_right).abs > 1.0e-3 * l_left.abs.max (l_right.abs).max (1.0)
 		end
 
 	safe_integral (a_node: GC_NODE; a_a, a_b: REAL_64): REAL_64
@@ -111,15 +129,19 @@ feature -- Calculations
 		end
 
 	roots (a_node: GC_NODE; a_low, a_high: REAL_64): ARRAYED_LIST [REAL_64]
-			-- Roots in [a_low, a_high]: sign changes over 400 steps, refined by simple_math's
-			-- bisection, keeping only true zeros (not poles such as tan's).
+			-- Roots in [a_low, a_high], in order: sign changes over 400 steps, refined by
+			-- simple_math's bisection, keeping only true zeros (not poles such as tan's); and
+			-- zeros the graph only touches (abs(sin(x)) at kπ, x² at 0), found where |f| has a
+			-- local minimum between samples of one sign and refined by a golden-section search.
 		require
 			ordered: a_low < a_high
 		local
 			i, n: INTEGER
-			x1, x2, y1, y2, r, l_step: REAL_64
+			l_xa, x1, x2, l_ya, y1, y2, r, l_step: REAL_64
+			l_touches: ARRAYED_LIST [REAL_64]
 		do
 			create Result.make (4)
+			create l_touches.make (2)
 			n := 400
 			l_step := (a_high - a_low) / n
 			from
@@ -145,10 +167,88 @@ feature -- Calculations
 						end
 					end
 				end
+				if i >= 1 and then not l_ya.is_nan and not y1.is_nan and not y2.is_nan and then l_ya * y1 > 0.0 and then y1 * y2 > 0.0
+					and then y1.abs <= l_ya.abs and then y1.abs <= y2.abs
+				then
+					r := touch_zero (a_node, l_xa, x2)
+					if not r.is_nan then
+						if r.abs < 1.0e-9 * (a_high - a_low).max (1.0) then
+							r := 0.0
+						end
+						l_touches.extend (r)
+					end
+				end
+				l_xa := x1
+				l_ya := y1
 				x1 := x2
 				y1 := y2
 				i := i + 1
 			end
+			if not l_touches.is_empty then
+				Result := merged (Result, l_touches, 1.0e-7 * (a_high - a_low).max (1.0))
+			end
+		end
+
+	touch_zero (a_node: GC_NODE; a_low, a_high: REAL_64): REAL_64
+			-- Where |f| is least in [a_low, a_high] (golden-section search), if f is zero there
+			-- to within 1e-9; else NaN.
+		local
+			l_a, l_b, c, d, fc, fd: REAL_64
+			k: INTEGER
+		do
+			l_a := a_low
+			l_b := a_high
+			c := l_b - Golden * (l_b - l_a)
+			d := l_a + Golden * (l_b - l_a)
+			fc := a_node.value (c).abs
+			fd := a_node.value (d).abs
+			from k := 1 until k > 120 or (l_b - l_a) < 1.0e-13 * (l_a.abs + l_b.abs).max (1.0) loop
+				if fc <= fd then
+					l_b := d
+					d := c
+					fd := fc
+					c := l_b - Golden * (l_b - l_a)
+					fc := a_node.value (c).abs
+				else
+					l_a := c
+					c := d
+					fc := fd
+					d := l_a + Golden * (l_b - l_a)
+					fd := a_node.value (d).abs
+				end
+				k := k + 1
+			end
+			Result := (l_a + l_b) / 2.0
+			if a_node.value (Result).is_nan or else a_node.value (Result).abs > 1.0e-9 then
+				Result := {REAL_64}.nan
+			end
+		end
+
+	Golden: REAL_64 = 0.6180339887498949
+			-- 1 / φ.
+
+	merged (a_crossings, a_touches: ARRAYED_LIST [REAL_64]; a_near: REAL_64): ARRAYED_LIST [REAL_64]
+			-- Both lists in one, in order, a root within `a_near' of another kept once.
+			-- (Both come from the scan in ascending order.)
+		local
+			i, j: INTEGER
+			l_next: REAL_64
+		do
+			create Result.make (a_crossings.count + a_touches.count)
+			from i := 1; j := 1 until i > a_crossings.count and j > a_touches.count loop
+				if j > a_touches.count or else (i <= a_crossings.count and then a_crossings [i] <= a_touches [j]) then
+					l_next := a_crossings [i]
+					i := i + 1
+				else
+					l_next := a_touches [j]
+					j := j + 1
+				end
+				if Result.is_empty or else (l_next - Result.last).abs > a_near then
+					Result.extend (l_next)
+				end
+			end
+		ensure
+			ascending: across 2 |..| Result.count as ic all Result [ic - 1] < Result [ic] end
 		end
 
 	roots_text (a_node: GC_NODE; a_low, a_high: REAL_64): STRING_32
